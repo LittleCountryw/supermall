@@ -1,6 +1,8 @@
 <template>
-  <div class="goods-item">
-    <img :src="goodsItem.show.img" alt="">
+  <div class="goods-item" @click="itemClick">
+    <!--<img :src="showImage" alt="" @load="imageLoad">-->
+    <!--使用图片懒加载-->
+    <img v-lazy="showImage" alt="" @load="imageLoad">
     <div class="goods-info">
       <p>{{goodsItem.title}}</p>
       <span class="price">{{goodsItem.price}}</span>
@@ -18,6 +20,37 @@
         default(){
           return {}
         }
+      }
+    },
+    methods:{
+      imageLoad(){
+        // console.log("图片加载完成");
+        //现在要做的是让scroll实例在每张图片完成加载后都重新计算scrollerHeight的值
+        //所以要实现GoodsListItem与Scroll组件之间的通信
+        //直接进行发射事件很麻烦，可以采取两种方法
+        // 1.利用事件总线2.在Vuex设置一个状态，由scroll监听状态的改变
+        //这里采取事件总线的方法
+
+        // this.$bus.$emit('itemImageLoad')
+      //   方法一：用路由的方法判断并发出不同的事件进行不同的监听
+      //   if(this.$route.path.indexOf('/home')){
+      //     this.$bus.$emit('homeItemImageLoad')
+      //   }else if(this.$route.path.indexOf('/detail')){
+      //     this.$bus.$emit('detailItemImageLoad')
+      //   }
+      // },
+          this.$bus.$emit('itemImageLoad')
+
+        },
+      itemClick(){
+        this.$router.push('/detail/'+this.goodsItem.iid)
+      }
+    },
+    computed:{
+      showImage(){
+        return this.goodsItem.image||this.goodsItem.show.img
+        // return this.goodsItem.show.img ? goodsItem.show.img : this.goodsItem.image
+        // console.log(this.goodsItem.show.img);
       }
     }
   }
