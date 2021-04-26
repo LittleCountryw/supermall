@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+</head>
+<body>
+<!--
+理解响应式原理需要解决的两个问题
+
+1.app.message修改数据，vue内部是如何监听message数据的改变
+Object.defineProperty -> 监听对象属性的改变
+
+2.当数据发生改变，vue是如何知道要通知那些人，界面发生刷新
+发布订阅者模式
+-->
+<div id="app">
+  {{message}}
+  {{message}}
+  {{message}}
+  {{name}}
+</div>
+
+<script>
+  const obj = {
+    message:'hhh',
+    name:'kanae'
+  }
+  Object.keys(obj).forEach(key=>{
+    let value = obj[key]
+    //监听值的改变
+    Object.defineProperty(obj,key,{
+
+      set(newValue){
+        //在对value进行修改时，就会执行set函数
+        //所以就可以监听到key的改变
+        //监听到改变，告诉谁？谁用告诉谁 谁在用了
+        //根据解析html代码，获取到哪些人又用属性
+
+        console.log('监听' + key + '改变');
+        value = newValue
+
+        dep.notify()
+      },
+      get(){
+        //监听到获取值
+        console.log('获取' + key + '对应的值');
+        return value
+      }
+    })
+  })
+  //发布订阅者
+  class Dep {
+    constructor(){
+      this.subs = []//数组用来记录现在谁要订阅这个属性
+    }
+    addSub(watcher){//将订阅者加入数组
+      this.subs.push(watcher)
+    }
+    notify(){//通知数组中所有订阅者更新数据
+      this.subs.forEach(item=>{
+        item.update()
+      })
+    }
+  }
+  class Watch {//创建订阅者对象
+    constructor(name){
+      this.name = name;
+    }
+    update(){//对订阅者信息进行更新
+      console.log(this.name + '发生update');
+    }
+  }
+
+  const w1 = new Watch('张三')
+  const w2 = new Watch('李四')
+  const w3 = new Watch('王五')
+  const dep = new Dep()
+
+  dep.addSub(w1)
+  dep.addSub(w2)
+  dep.addSub(w3)
+
+  dep.notify()
+
+
+  /*
+  * 总结：
+  * 在get函数中通过解析html代码可以获得有哪些订阅者，
+  * 这时可以创建watch对象，并将watch对象通过addSub加入到订阅者数组中
+  * 当value发生改变时，调用set函数
+  * 此时再调用notify函数遍历订阅者数组中所有watch对象来更新数据
+  * 即调用watch对象的update方法
+  * */
+</script>
+
+<script src="./node_modules/vue/dist/vue.js"></script>
+<script>
+  const app = new Vue({
+    el:'#app',
+    data:{
+      message:'hhh',
+      name:'kanae'
+    }
+  })
+</script>
+</body>
+</html>
